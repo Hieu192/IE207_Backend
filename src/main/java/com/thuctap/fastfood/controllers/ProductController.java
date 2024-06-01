@@ -180,8 +180,12 @@ public class ProductController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<List<Product>> searchProductHandler(@RequestParam String q) {
-      List<Product> products = productService.searchProduct(q);
+  public ResponseEntity<List<Product>> searchProductHandler(@RequestParam String search) {
+    List<Product> products = new ArrayList<>();
+    if (search != null || !search.isEmpty()) {
+      search = search.replace("+", " ");
+      products = productService.searchProduct(search);
+    }
       return ResponseEntity.ok(products);
   }
 
@@ -215,6 +219,50 @@ public class ProductController {
     } else {
       category = category.replace("+", " ");
       products = productService.findByCategory(category);
+    }
+    if (minPrice ==0 && maxPrice == 0){
+      products = products;
+    } else {
+      products = products.stream().filter(product -> product.getPrice() >= minPrice && product.getPrice() < maxPrice)
+              .collect(Collectors.toList());
+    }
+    if ("price_low".equalsIgnoreCase(sort)) {
+      products.sort(Comparator.comparing(Product::getPrice));
+    } else if ("price_high".equalsIgnoreCase(sort)) {
+      products.sort(Comparator.comparing(Product::getPrice).reversed());
+    }
+    return ResponseEntity.ok(products);
+  }
+
+  @GetMapping("/filterv")
+  public ResponseEntity<List<Product>> findByfilter(@RequestParam String search, @RequestParam String category, @RequestParam Double minPrice, @RequestParam Double maxPrice, @RequestParam String sort) {
+//    try {
+//      // Giải mã tham số category
+//      category = URLDecoder.decode(category, "UTF-8");
+//      sort = URLDecoder.decode(sort, "UTF-8");
+//
+//    } catch (UnsupportedEncodingException e) {
+//      e.printStackTrace();
+//    }
+
+    List<Product> products = productService.findAll();
+    if (search != null || !search.isEmpty()) {
+      search = search.replace("+", " ");
+      products = productService.searchProduct(search);
+    }
+
+    if (category == null || category.isEmpty()) {
+      products = products;
+    } else {
+      category = category.replace("+", " ");
+      List<Product> categoryFilteredProducts = productService.findByCategory(category);
+
+      if (products != null) {
+        // Lọc sản phẩm theo cả tên và thể loại
+        products = products.stream()
+                .filter(categoryFilteredProducts::contains)
+                .collect(Collectors.toList());
+      }
     }
     if (minPrice ==0 && maxPrice == 0){
       products = products;

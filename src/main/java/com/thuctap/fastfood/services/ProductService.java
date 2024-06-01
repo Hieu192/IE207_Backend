@@ -74,8 +74,8 @@ public class ProductService {
     return product;
   }
 
-    public List<Product> searchProduct(String q) {
-      List<Product> products = productRepository.findByName(q);
+    public List<Product> searchProduct(String search) {
+      List<Product> products = productRepository.findByName(search);
       return products;
     }
 
